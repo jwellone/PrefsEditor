@@ -7,7 +7,9 @@
 
 
 # PrefsEditor
-Can view and edit PlayerPrefs.
+Basic functions related to PlayerPref in Unity are summarized.
+- View and edit recorded data.
+- Output key constant file.
 
 This feature is one of the "j1Tech" developed by jwellone Inc for Unity.
 
