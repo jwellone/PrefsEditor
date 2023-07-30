@@ -1,10 +1,8 @@
-﻿using UnityEngine;
-
 #nullable enable
 
 namespace jwelloneEditor
 {
-    public sealed class PlayerPrefsEntity
+    public class PrefsEntity
     {
         public enum ValueType
         {
@@ -37,14 +35,9 @@ namespace jwelloneEditor
             }
         }
 
-        public PlayerPrefsEntity(string key, string value)
+        public PrefsEntity(string key, string value)
         {
             this.key = key;
-
-            if (!PlayerPrefs.HasKey(key))
-            {
-                return;
-            }
 
             if (int.TryParse(value, out var iValue))
             {
@@ -67,7 +60,7 @@ namespace jwelloneEditor
             this.value = value;
         }
 
-        public PlayerPrefsEntity(string key, string value, ValueType type)
+        public PrefsEntity(string key, string value, ValueType type)
         {
             this.key = key;
             _initialValue = value;
@@ -78,6 +71,11 @@ namespace jwelloneEditor
         public void Apply()
         {
             _initialValue = value;
+        }
+
+        public void ApplyInitializeValue()
+        {
+            value = _initialValue;
         }
     }
 }

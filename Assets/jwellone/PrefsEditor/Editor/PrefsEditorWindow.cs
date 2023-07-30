@@ -25,27 +25,22 @@ namespace jwelloneEditor
             Descending
         }
 
-        class EmptyProvider : PlayerPrefsProvider
-        {
-            public override string filePath => string.Empty;
-        }
-
         class AddPopup : PopupWindowContent
         {
             string _key = string.Empty;
             string _value = string.Empty;
-            PlayerPrefsEntity.ValueType _valueType;
+            PrefsEntity.ValueType _valueType;
 
             bool isValid
             {
                 get
                 {
-                    if (string.IsNullOrEmpty(_key) || _valueType == PlayerPrefsEntity.ValueType.None)
+                    if (string.IsNullOrEmpty(_key) || _valueType == PrefsEntity.ValueType.None)
                     {
                         return false;
                     }
 
-                    if (_valueType == PlayerPrefsEntity.ValueType.Number)
+                    if (_valueType == PrefsEntity.ValueType.Number)
                     {
                         if (!int.TryParse(_value, out var iValue) && !float.TryParse(_value, out var fValue))
                         {
@@ -57,7 +52,7 @@ namespace jwelloneEditor
                 }
             }
 
-            public Action<string, PlayerPrefsEntity.ValueType, string>? addCallback { get; set; }
+            public Action<string, PrefsEntity.ValueType, string>? addCallback { get; set; }
 
             public override Vector2 GetWindowSize()
             {
@@ -71,7 +66,7 @@ namespace jwelloneEditor
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Value type");
-                _valueType = (PlayerPrefsEntity.ValueType)EditorGUILayout.EnumPopup(_valueType, GUILayout.Width(226));
+                _valueType = (PrefsEntity.ValueType)EditorGUILayout.EnumPopup(_valueType, GUILayout.Width(226));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
@@ -87,6 +82,10 @@ namespace jwelloneEditor
             }
         }
 
+        readonly string[] _tabNames = new[] { "PlayerPrefs", "EditorPrefes" };
+        readonly PrefsProvider[] _playerPrefsProvider = PrefsProviderFactory.Create();
+
+        int _tabIndex;
         Vector2 _scrollPosition = Vector2.zero;
         ReorderableList? _reorderableList;
         GUIContent? _openIcon;
@@ -99,15 +98,9 @@ namespace jwelloneEditor
         SortType _sortType;
         string _searchFieldText = string.Empty;
         SearchField? _searchField;
-        readonly List<PlayerPrefsEntity> _entities = new List<PlayerPrefsEntity>();
+        readonly List<PrefsEntity> _entities = new List<PrefsEntity>();
 
-#if UNITY_EDITOR_OSX
-        readonly PlayerPrefsProvider _provider = new MacPlayerPrefsProvider();
-#elif UNITY_EDITOR_WIN
-        readonly PlayerPrefsProvider _provider = new WindowsPlayerPrefsProvider();
-#else
-        readonly PlayerPrefsProvider _provider = new EmptyProvider();
-#endif
+        PrefsProvider _provider => _playerPrefsProvider[_tabIndex];
 
         [MenuItem("jwellone/window/PrefsEditor")]
         static void Open()
@@ -130,6 +123,17 @@ namespace jwelloneEditor
 
         void OnGUI()
         {
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+            {
+                var tabIndex = GUILayout.Toolbar(_tabIndex, _tabNames, new GUIStyle(EditorStyles.toolbarButton), GUI.ToolbarButtonSize.FitToContents);
+                if (tabIndex != _tabIndex)
+                {
+                    _tabIndex = tabIndex;
+                    _reorderableList = null;
+                    _scrollPosition = Vector2.zero;
+                }
+            }
+
             if (_reorderableList == null)
             {
                 _provider.Initialize();
@@ -143,7 +147,7 @@ namespace jwelloneEditor
                 (SortType)EditorGUILayout.EnumPopup(_sortType, GUILayout.Width(96)),
                 _searchField!.OnToolbarGUI(_searchFieldText));
 
-            if(_provider.showOpenFinder)
+            if (_provider.showOpenFinder)
             {
                 if (GUILayout.Button(_openIcon, GUILayout.Width(32), GUILayout.Height(20)))
                 {
@@ -153,7 +157,7 @@ namespace jwelloneEditor
 
             if (GUILayout.Button(_trashIcon, GUILayout.Width(32)))
             {
-                if (EditorUtility.DisplayDialog("PlayerPrefs", "Delete?", "ok", "cancel"))
+                if (EditorUtility.DisplayDialog("Delete", "Delete information?", "ok", "cancel"))
                 {
                     _provider.DeleteAll();
                     RefreshEntities();
@@ -202,7 +206,7 @@ namespace jwelloneEditor
         ReorderableList CreateReorderableList()
         {
             RefreshEntities();
-            return new ReorderableList(_entities, typeof(PlayerPrefsEntity), true, false, true, true)
+            return new ReorderableList(_entities, typeof(PrefsEntity), true, false, true, true)
             {
                 drawElementCallback = (rect, index, isActive, isFocused) =>
                 {
@@ -212,7 +216,7 @@ namespace jwelloneEditor
 
                     rect.height *= 0.94f;
 
-                    GUI.backgroundColor = entity.type == PlayerPrefsEntity.ValueType.Number ? Color.cyan : tmpColor;
+                    GUI.backgroundColor = entity.type == PrefsEntity.ValueType.Number ? Color.cyan : tmpColor;
                     rect.width = tmpWidth * 0.35f;
                     EditorGUI.SelectableLabel(rect, entity.key, EditorStyles.selectionRect);
 
@@ -241,7 +245,7 @@ namespace jwelloneEditor
                     var content = new AddPopup();
                     content.addCallback = (key, valueType, value) =>
                     {
-                        if (valueType == PlayerPrefsEntity.ValueType.Number)
+                        if (valueType == PrefsEntity.ValueType.Number)
                         {
                             if (int.TryParse(value, out var iValue))
                             {

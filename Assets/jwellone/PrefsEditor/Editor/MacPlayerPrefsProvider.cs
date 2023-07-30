@@ -18,36 +18,29 @@ namespace jwelloneEditor
             base.Initialize();
 
             using var process = System.Diagnostics.Process.Start(
-            new System.Diagnostics.ProcessStartInfo
+                    new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "plutil",
+                        Arguments = $"-p {filePath}",
+                        CreateNoWindow = true,
+                        WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
+                        StandardOutputEncoding = Encoding.UTF8,
+                        StandardErrorEncoding = Encoding.UTF8,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        WorkingDirectory = Application.dataPath
+                    });
+
+            var line = string.Empty;
+            while ((line = process.StandardOutput.ReadLine()) != null)
             {
-                FileName = "plutil",
-                Arguments = $"-p {filePath}",
-                CreateNoWindow = true,
-                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                WorkingDirectory = Application.dataPath
-            });
-
-            process.EnableRaisingEvents = true;
-
-            var result = string.Empty;
-            process.Exited += (sender, e) =>
-            {
-                result = process.StandardOutput.ReadToEnd().Trim();
-            };
-
-            process.WaitForExit();
-
-            var rows = result.Split('\n');
-            for (var i = 1; i < rows.Length - 1; ++i)
-            {
-                var columns = rows[i].Split(" => ");
-                var key = columns[0].Replace("\"", "").Replace(" ", "");
-                AddEntity(key, columns[1]);
+                var columns = line.Split(" => ");
+                if (columns.Length >= 2)
+                {
+                    var key = columns[0].Replace("\"", "").Replace(" ", "");
+                    AddEntity(key, columns[1]);
+                }
             }
         }
     }
