@@ -1,12 +1,12 @@
-﻿using UnityEngine;
+using UnityEditor;
 
 #nullable enable
 
 namespace jwelloneEditor
 {
-    public abstract class PlayerPrefsProvider : PrefsProvider
+    public abstract class EditorPrefProvider : PrefsProvider
     {
-        static readonly IPrefsConstGenerator _defaultConstGenerator = new PrefsConstGenerator("PlayerPrefsConst");
+        static readonly IPrefsConstGenerator _defaultConstGenerator = new PrefsConstGenerator("EditorPrefsConst");
         static IPrefsConstGenerator _staticConstGenerator = _defaultConstGenerator;
 
         public static IPrefsConstGenerator staticConstGenerator
@@ -19,53 +19,58 @@ namespace jwelloneEditor
             }
         }
 
+        bool _isInitializeCompleted;
         protected sealed override IPrefsConstGenerator _constGenerator => staticConstGenerator;
-        protected sealed override string[] _keysForIgnore => new[]
+
+        protected override string[] _keysForIgnore { get; } = new string[0];
+
+        public sealed override void Initialize()
         {
-            "unity.cloud_userid",
-            "unity.player_session_count",
-            "unity.player_sessionid",
-            "UnityGraphicsQuality"
-        };
+            if(_isInitializeCompleted)
+            {
+                ApplyInitializeValue();
+                return;
+            }
+
+            base.Initialize();
+            OnInitialize();
+            _isInitializeCompleted = true;
+        }
 
         public sealed override void SetInt(string key, int value)
         {
-            PlayerPrefs.SetInt(key, value);
-            Save();
+            EditorPrefs.SetInt(key, value);
             AddEntity(key, value.ToString(), PrefsEntity.ValueType.Number);
         }
 
         public sealed override void SetFloat(string key, float value)
         {
-            PlayerPrefs.SetFloat(key, value);
-            Save();
+            EditorPrefs.SetFloat(key, value);
             AddEntity(key, value.ToString(), PrefsEntity.ValueType.Number);
         }
 
         public sealed override void SetString(string key, string value)
         {
-            PlayerPrefs.SetString(key, value);
-            Save();
+            EditorPrefs.SetString(key, value);
             AddEntity(key, value.ToString(), PrefsEntity.ValueType.String);
         }
 
         public sealed override void Delete(string key)
         {
-            PlayerPrefs.DeleteKey(key);
-            Save();
+            EditorPrefs.DeleteKey(key);
             DeleteEntity(key);
         }
 
         public sealed override void DeleteAll()
         {
-            PlayerPrefs.DeleteAll();
-            Save();
+            EditorPrefs.DeleteAll();
             DeleteEntities();
         }
 
         public sealed override void Save()
         {
-            PlayerPrefs.Save();
         }
+
+        protected abstract void OnInitialize();
     }
 }
