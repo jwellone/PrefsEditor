@@ -18,7 +18,7 @@ This feature is one of the "j1Tech" developed by jwellone Inc for Unity.
 - Select "jwellone > jwellone > window > PrefsEditor" from the menu bar.
 - Can add, delete, edit, etc. in the window.
 
-![PrefsEditor](https://github.com/jwellone/PrefsEditor/assets/85072161/8296e2a8-3ee2-4854-aeb1-a2295d16d8e9)
+![PrefsEditor](https://github.com/jwellone/PrefsEditor/assets/85072161/76cf3f7f-c82f-46cd-a47e-44373344fe2a)
 
 ## Authors
 Developer:[Yasuhiko Usui.](https://github.com/UsuiYasuhiko-jw1)
