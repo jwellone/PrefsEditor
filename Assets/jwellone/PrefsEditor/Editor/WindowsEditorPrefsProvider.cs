@@ -6,9 +6,9 @@ using Microsoft.Win32;
 
 namespace jwelloneEditor
 {
-    public class WindowsEditorPrefsProvider : EditorPrefProvider
+    public sealed class WindowsEditorPrefsProvider : EditorPrefProvider
     {
-        public override string filePath => "Software\\Unity Technologies\\UnityEditor 5.x";
+        public override string filePath => "Software\\Unity Technologies\\Unity Editor 5.x\\";
         public override bool showOpenFinder => false;
 
         protected override void OnInitialize()
