@@ -8,14 +8,14 @@
 
 # PrefsEditor
 Basic functions related to PlayerPref in Unity are summarized.
-- View and edit recorded data.
+- Display and edit recorded data.
 - Output key constant file.
 
 This feature is one of the "j1Tech" developed by jwellone Inc for Unity.
 
 ## Getting Started
-- import this package.
-- "jwellone > jwellone > window > PrefsEditor" Choose.
+- Import this package into your project.
+- Select "jwellone > jwellone > window > PrefsEditor" from the menu bar.
 - Can add, delete, edit, etc. in the window.
 
 ![PrefsEditor](https://github.com/jwellone/PrefsEditor/assets/85072161/8296e2a8-3ee2-4854-aeb1-a2295d16d8e9)
