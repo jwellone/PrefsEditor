@@ -86,6 +86,7 @@ namespace jwelloneEditor
         readonly PrefsProvider[] _playerPrefsProvider = PrefsProviderFactory.Create();
 
         int _tabIndex;
+        int _removeEntityIndex = -1;
         Vector2 _scrollPosition = Vector2.zero;
         ReorderableList? _reorderableList;
         GUIContent? _openIcon;
@@ -93,6 +94,8 @@ namespace jwelloneEditor
         GUIContent? _saveIcon;
         GUIContent? _refreshIcon;
         GUIContent? _scriptIcon;
+        GUIContent? _plusIcon;
+        GUIContent? _minusIcon;
         GUIStyle? _guiStyleForValue;
         SearchType _searchType;
         SortType _sortType;
@@ -107,17 +110,18 @@ namespace jwelloneEditor
         {
             var window = GetWindow<PrefsEditorWindow>();
             window.minSize = new Vector2(650f, 200f);
-            window.titleContent = CreateIcon("d_SaveAs", "Can edit Prefs", "PlayerPrefs");
+            window.titleContent = EditorGUIUtility.TrTextContent("Prefs Editor", "Can edit Prefs", "d_SaveAs");
         }
 
         void OnEnable()
         {
-            _openIcon = CreateIcon("d_FolderOpened Icon", "Open prefs");
-            _trashIcon = CreateIcon("d_TreeEditor.Trash", "Delete prefs");
-            _saveIcon = CreateIcon("d_SaveAs", "Save prefs");
-            _refreshIcon = CreateIcon("d_TreeEditor.Refresh", "Reload prefs");
-            _scriptIcon = CreateIcon("d_cs Script Icon", "Output constant script");
-
+            _openIcon = EditorGUIUtility.TrIconContent("d_FolderOpened Icon", "Open prefs");
+            _trashIcon = EditorGUIUtility.TrIconContent("d_TreeEditor.Trash", "Delete prefs");
+            _saveIcon = EditorGUIUtility.TrIconContent("d_SaveAs", "Save prefs");
+            _refreshIcon = EditorGUIUtility.TrIconContent("d_TreeEditor.Refresh", "Reload prefs");
+            _scriptIcon = EditorGUIUtility.TrIconContent("d_cs Script Icon", "Output constant script");
+            _plusIcon = EditorGUIUtility.TrIconContent("d_Toolbar Plus More", "Choose to add to the list");
+            _minusIcon = EditorGUIUtility.TrIconContent("d_Toolbar Minus", "Remove selection from the list");
             _searchField = new SearchField();
         }
 
@@ -181,6 +185,34 @@ namespace jwelloneEditor
                 _provider.ConstGenerate();
             }
 
+            var rect = GUILayoutUtility.GetLastRect();
+            if (GUILayout.Button(_plusIcon, GUILayout.Width(32)))
+            {
+                var content = new AddPopup();
+                content.addCallback = (key, valueType, value) =>
+                {
+                    if (valueType == PrefsEntity.ValueType.Number)
+                    {
+                        if (int.TryParse(value, out var iValue))
+                        {
+                            _provider.SetInt(key, iValue);
+                        }
+                        else if (float.TryParse(value, out var fValue))
+                        {
+                            _provider.SetFloat(key, fValue);
+                        }
+                    }
+                    else
+                    {
+                        _provider.SetString(key, value);
+                    }
+
+                    RefreshEntities();
+                };
+
+                rect.x -= content.GetWindowSize().x - 66;
+                PopupWindow.Show(rect, content);
+            }
             GUILayout.EndHorizontal();
 
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
@@ -201,18 +233,32 @@ namespace jwelloneEditor
             {
                 EditorGUILayout.HelpBox($"There are data changes. A save is required to apply the changes.", MessageType.Warning);
             }
+
+            if (_removeEntityIndex != -1)
+            {
+                var entity = _entities[_removeEntityIndex];
+                if (EditorUtility.DisplayDialog("Delete", $"Delete information?\nkey is {entity.key}\nvalue is {entity.value}", "ok", "cancel"))
+                {
+                    _provider.Delete(entity.key);
+                    RefreshEntities();
+                }
+                else
+                {
+                    _removeEntityIndex = -1;
+                }
+            }
         }
 
         ReorderableList CreateReorderableList()
         {
             RefreshEntities();
-            return new ReorderableList(_entities, typeof(PrefsEntity), true, false, true, true)
+            return new ReorderableList(_entities, typeof(PrefsEntity), true, false, false, false)
             {
                 drawElementCallback = (rect, index, isActive, isFocused) =>
                 {
                     var tmpColor = GUI.backgroundColor;
                     var entity = _entities[index];
-                    var tmpWidth = rect.width;
+                    var tmpWidth = rect.width - 38;
 
                     rect.height *= 0.94f;
 
@@ -239,39 +285,13 @@ namespace jwelloneEditor
                     rect.width = tmpWidth * 0.65f;
                     entity.value = EditorGUI.TextField(rect, entity.value, _guiStyleForValue);
                     GUI.backgroundColor = tmpColor;
-                },
-                onAddDropdownCallback = (rect, list) =>
-                {
-                    var content = new AddPopup();
-                    content.addCallback = (key, valueType, value) =>
+
+                    rect.x += rect.width + 4;
+                    rect.width = 32;
+                    if (GUI.Button(rect, _minusIcon))
                     {
-                        if (valueType == PrefsEntity.ValueType.Number)
-                        {
-                            if (int.TryParse(value, out var iValue))
-                            {
-                                _provider.SetInt(key, iValue);
-                            }
-                            else if (float.TryParse(value, out var fValue))
-                            {
-                                _provider.SetFloat(key, fValue);
-                            }
-                        }
-                        else
-                        {
-                            _provider.SetString(key, value);
-                        }
-
-                        RefreshEntities();
-                    };
-                    rect.x -= content.GetWindowSize().x;
-                    PopupWindow.Show(rect, content);
-
-                },
-                onRemoveCallback = (list) =>
-                {
-                    var entity = _entities[list.index];
-                    _provider.Delete(entity.key);
-                    RefreshEntities();
+                        _removeEntityIndex = index;
+                    }
                 }
             };
         }
@@ -292,6 +312,9 @@ namespace jwelloneEditor
 
         void RefreshEntities()
         {
+            GUI.FocusControl("");
+
+            _removeEntityIndex = -1;
             _entities.Clear();
 
             if (!string.IsNullOrEmpty(_searchFieldText))
@@ -344,11 +367,6 @@ namespace jwelloneEditor
                     _entities.Sort((a, b) => string.Compare(b.value, a.value));
                 }
             }
-        }
-
-        static GUIContent CreateIcon(string fileName, string tooltip, string text = "")
-        {
-            return new GUIContent(text, EditorGUIUtility.IconContent(fileName).image, tooltip);
         }
     }
 }
