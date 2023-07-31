@@ -9,11 +9,6 @@ using UnityEngine;
 
 namespace jwelloneEditor
 {
-    public interface IPrefsConstGenerator
-    {
-        void Generate(IReadOnlyList<PrefsEntity> entities);
-    }
-
     public sealed class PrefsConstGenerator : IPrefsConstGenerator
     {
         static readonly string[] _invalidChars =
