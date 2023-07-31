@@ -1,10 +1,9 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEditor.IMGUI.Controls;
-using System.Collections.Generic;
-using System;
-using System.Linq;
 
 #nullable enable
 
@@ -25,65 +24,8 @@ namespace jwelloneEditor
             Descending
         }
 
-        class AddPopup : PopupWindowContent
-        {
-            string _key = string.Empty;
-            string _value = string.Empty;
-            PrefsEntity.ValueType _valueType;
-
-            bool isValid
-            {
-                get
-                {
-                    if (string.IsNullOrEmpty(_key) || _valueType == PrefsEntity.ValueType.None)
-                    {
-                        return false;
-                    }
-
-                    if (_valueType == PrefsEntity.ValueType.Number)
-                    {
-                        if (!int.TryParse(_value, out var iValue) && !float.TryParse(_value, out var fValue))
-                        {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                }
-            }
-
-            public Action<string, PrefsEntity.ValueType, string>? addCallback { get; set; }
-
-            public override Vector2 GetWindowSize()
-            {
-                return new Vector2(384, 84);
-            }
-
-            public override void OnGUI(Rect rect)
-            {
-                _key = EditorGUILayout.TextField("key", _key);
-                _value = EditorGUILayout.TextField("value", _value);
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Value type");
-                _valueType = (PrefsEntity.ValueType)EditorGUILayout.EnumPopup(_valueType, GUILayout.Width(226));
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                GUI.enabled = isValid;
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Add", GUILayout.Width(42)))
-                {
-                    addCallback?.Invoke(_key, _valueType, _value);
-                    editorWindow.Close();
-                }
-                GUI.enabled = true;
-                GUILayout.EndHorizontal();
-            }
-        }
-
         readonly string[] _tabNames = new[] { "PlayerPrefs", "EditorPrefes" };
-        readonly PrefsProvider[] _playerPrefsProvider = PrefsProviderFactory.Create();
+        readonly PrefsProvider[] _providers = PrefsProviderFactory.Create();
 
         int _tabIndex;
         int _removeEntityIndex = -1;
@@ -103,7 +45,7 @@ namespace jwelloneEditor
         SearchField? _searchField;
         readonly List<PrefsEntity> _entities = new List<PrefsEntity>();
 
-        PrefsProvider _provider => _playerPrefsProvider[_tabIndex];
+        PrefsProvider _provider => _providers[_tabIndex];
 
         [MenuItem("jwellone/window/PrefsEditor")]
         static void Open()
@@ -185,10 +127,10 @@ namespace jwelloneEditor
                 _provider.ConstGenerate();
             }
 
-            var rect = GUILayoutUtility.GetLastRect();
+            var lastRect = GUILayoutUtility.GetLastRect();
             if (GUILayout.Button(_plusIcon, GUILayout.Width(32)))
             {
-                var content = new AddPopup();
+                var content = new AddEntityPopupWindowContent();
                 content.addCallback = (key, valueType, value) =>
                 {
                     if (valueType == PrefsEntity.ValueType.Number)
@@ -210,8 +152,8 @@ namespace jwelloneEditor
                     RefreshEntities();
                 };
 
-                rect.x -= content.GetWindowSize().x - 66;
-                PopupWindow.Show(rect, content);
+                lastRect.x -= content.GetWindowSize().x - 66;
+                PopupWindow.Show(lastRect, content);
             }
             GUILayout.EndHorizontal();
 
