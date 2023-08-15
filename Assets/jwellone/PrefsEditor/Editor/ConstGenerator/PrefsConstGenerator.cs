@@ -87,7 +87,7 @@ namespace jwelloneEditor
             var fullPath = Path.Combine(Application.dataPath, relativePath);
             using (var stream = new StreamWriter(fullPath, false, Encoding.UTF8))
             {
-                stream.NewLine = "\r\n";
+                stream.NewLine = "\n";
                 stream.Write(sb.ToString().Replace(Environment.NewLine, stream.NewLine));
                 Debug.Log($"{fullPath} generated.");
             }
