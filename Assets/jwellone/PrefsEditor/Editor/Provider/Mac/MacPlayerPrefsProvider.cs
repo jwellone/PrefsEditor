@@ -21,7 +21,7 @@ namespace jwelloneEditor
                     new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = "plutil",
-                        Arguments = $"-p {filePath}",
+                        Arguments = $"-p \"{filePath}\"",
                         CreateNoWindow = true,
                         WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
                         StandardOutputEncoding = Encoding.UTF8,
